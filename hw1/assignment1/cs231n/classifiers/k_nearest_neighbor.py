@@ -77,7 +77,7 @@ class KNearestNeighbor(object):
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-                pass
+                dists[i,j] = np.sqrt(np.sum(np.square(X[i,:]-self.X_train[j,:])))
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -101,7 +101,7 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            dists[i,:] = np.sqrt(np.sum(np.square(self.X_train-X[i,:]), axis=1))
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -131,7 +131,20 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # X_tile = np.expand_dims(X, axis=1)
+        # print('tiled the training data:', X_tile.shape)
+
+        # X_diffs_sq = np.square(X_tile - self.X_train)
+        # print('calculated pixel diffs and squared', X_diffs_sq.shape)
+
+        # X_diff_sq_sum_sqrt = np.sqrt(np.sum(X_diffs_sq, axis=2))
+        # print('eliminated long axis by summing, then took sqrt', X_diff_sq_sum_sqrt.shape)
+
+        term1 = np.sum(np.square(np.expand_dims(X, axis=1)), axis=2)
+        term2 = -2*X@self.X_train.T
+        term3 = np.sum(np.square(self.X_train), axis=1)
+
+        dists = np.sqrt(	term1	+ term2	+	term3	)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -164,7 +177,8 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            idx = np.argsort(dists[i,:])[0:k]
+            closest_y = self.y_train[idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
@@ -176,7 +190,9 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            c_y_unique = np.unique(closest_y, return_counts=True);
+            closest_y_idx = np.argmax(c_y_unique[1]);
+            y_pred[i] = c_y_unique[0][closest_y_idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
