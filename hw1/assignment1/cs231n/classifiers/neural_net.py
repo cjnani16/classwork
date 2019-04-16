@@ -80,7 +80,8 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        hidden_layer = np.maximum(np.zeros_like(b1), X.dot(W1) + b1)
+        scores = hidden_layer.dot(W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -98,7 +99,26 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        #normalization trick to avoid instability
+        scores -= np.expand_dims(np.max(scores, axis=1),-1)
+
+        #start per example loss as -correct class score
+        correct_class_scores = scores[np.arange(N),y]
+        L_sub_is = -correct_class_scores
+
+        #perform the summation using np.sum
+        summation_totals = np.sum(np.exp(scores), axis=1)
+      
+        #add summation totals to the per example losses
+        L_sub_is += np.log(summation_totals)
+
+        #add up losses per example
+        loss = np.sum(L_sub_is)
+        
+        #take avg and add regularization loss
+        loss /= N
+        loss += reg * np.sum(W1 * W1)
+        loss += reg * np.sum(W2 * W2)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +131,19 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dhl_dW1 = X
+        dhl_db1 = 1
+        dhl_dX = W1
+        ds_dW2 = hidden_layer
+        ds_dhl = W2
+        ds_db1 = 1
+
+        #add contributions of the summations to the gradient
+        ds_per_example = (np.exp(scores)*np.expand_dims(1/summation_totals,-1))
+        ds_per_example[np.arange(num_train),y] -= 1 #to give a -X contribution for every correct class
+        ds += hidden_layer.T.dot(ds_per_example)
+
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 

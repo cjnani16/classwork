@@ -113,10 +113,9 @@ def svm_loss_vectorized(W, X, y, reg):
     # loss.                                                                     #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    N_classes = W.shape[1]
 
     #start with the capped margins from earlier to use as multiples of X 
-    dw_col = score_diffs_capped;
+    dw_col = score_diffs_capped
 
     #theres a 1 for ever term where the margin was high enough that we added Loss (including 1 unit of loss for correctxcorrect locations)
     dw_col[score_diffs_capped>0] = 1 #representative of the result of the "if margin>0" above
