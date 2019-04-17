@@ -123,7 +123,6 @@ def svm_loss_vectorized(W, X, y, reg):
 
     #at correct class locations the contribution to loss is actually -X so put a -1*(for each time one of the non-correct classes subtracted it, so times_contributed-1)
     dw_col[np.arange(N_train),y] = -(times_contributed-1)
-    print(dw_col.shape)
 
     #add X to the gradient wherever the multiple was positive, add -X an appropriate # of times in the correct class places
     dW = X.T@dw_col
