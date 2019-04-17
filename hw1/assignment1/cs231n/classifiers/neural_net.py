@@ -80,7 +80,8 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        hidden_layer = np.maximum(np.zeros_like(b1), X.dot(W1) + b1)
+        hidden_layer_preactiv = X.dot(W1) + b1
+        hidden_layer = np.maximum(np.zeros_like(hidden_layer_preactiv), hidden_layer_preactiv)
         scores = hidden_layer.dot(W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -130,20 +131,37 @@ class TwoLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
+        #calculate gradient of all sub losses wrt scores
+        dLi_ds = (np.exp(scores)*np.expand_dims(1/summation_totals,-1))
+        dLi_ds[np.arange(N),y] -= 1 #to give a -1 contribution for every correct class
+        dL_ds = dLi_ds #no score contributes to Li for an other example (another i) so dL/ds = dLi/ds
+        dL_ds = (dL_ds / N) #take avg effect not sum
 
-        dhl_dW1 = X
-        dhl_db1 = 1
-        dhl_dX = W1
-        ds_dW2 = hidden_layer
-        ds_dhl = W2
-        ds_db1 = 1
+        #calculate grad of loss wrt b2 --avoid calculating jacobian ds_db2, just write implicitly!
+        dL_db2 = np.sum(dL_ds, axis=0)
+        grads['b2'] = dL_db2
 
-        #add contributions of the summations to the gradient
-        ds_per_example = (np.exp(scores)*np.expand_dims(1/summation_totals,-1))
-        ds_per_example[np.arange(num_train),y] -= 1 #to give a -X contribution for every correct class
-        ds += hidden_layer.T.dot(ds_per_example)
+        #calculate grad of loss wrt W2
+        #ds/dW2 = hidden_layer
+        dL_dw2 = hidden_layer.T @ dL_ds + 2 * reg * W2 #also add grad loss due to reg
+        grads['W2'] = dL_dw2
 
+        #calculate grad of loss wrt hidden_layer
+        #ds/dhl = w2
+        dL_dhl = dL_ds @ W2.T
 
+        #calculate grad of loss wrt hidden_layer_preactiv
+        dL_dhlp = dL_dhl
+        dL_dhlp[hidden_layer_preactiv < 0] = 0
+
+        #calculate grad of loss wrt b1
+        dL_db1 = np.sum(dL_dhlp, axis=0)
+        grads['b1'] = dL_db1
+
+        #calculate grad of loss wrt W1
+        dL_dw1 = X.T @ dL_dhlp + 2 * reg * W1 #also add grad loss due to reg
+        grads['W1'] = dL_dw1
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -188,7 +206,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            mask = np.random.choice(np.arange(X.shape[0]), (batch_size))
+            X_batch = X[mask,:]
+            y_batch = y[mask]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -204,7 +224,8 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            for param_name in grads:
+              self.params[param_name] += -grads[param_name] * learning_rate
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -250,7 +271,8 @@ class TwoLayerNet(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        scores = self.loss(X)
+        y_pred = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
